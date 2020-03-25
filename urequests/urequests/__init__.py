@@ -19,8 +19,12 @@ class Response:
             try:
                 self._cached = self.raw.read()
             finally:
-                self.raw.close()
-                self.raw = None
+                # OSError: [Errno -76] MBEDTLS_ERR_NET_RECV_FAILED
+                # AttributeError: NoneType object has no attribute close
+                # https://forum.pycom.io/topic/5755/micropython-error-trail-confusing-me
+                if self.raw:
+                    self.raw.close()
+                    self.raw = None
         return self._cached
 
     @property
