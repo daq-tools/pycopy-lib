@@ -41,7 +41,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
     if json is not None:
         assert data is None
         import ujson
-        data = ujson.dumps(json)
+        data = ujson.dumps(json).encode()
 
     while True:
         try:

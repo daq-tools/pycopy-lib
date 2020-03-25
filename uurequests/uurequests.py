@@ -81,7 +81,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
             if json is not None:
                 assert data is None
                 import ujson
-                data = ujson.dumps(json)
+                data = ujson.dumps(json).encode()
                 ss.write(b"Content-Type: application/json\r\n")
             if data:
                 ss.write(b"Content-Length: %d\r\n" % len(data))
