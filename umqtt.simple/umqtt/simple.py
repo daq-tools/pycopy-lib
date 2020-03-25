@@ -29,6 +29,7 @@ class MQTTClient:
         self.lw_retain = False
 
     def _send_str(self, s):
+        s = s.encode()
         self.stream.write(struct.pack("!H", len(s)))
         self.stream.write(s)
 
@@ -85,7 +86,7 @@ class MQTTClient:
             i += 1
         premsg[i] = sz
 
-        self.stream.write(premsg, i + 2)
+        self.stream.write(memoryview(premsg)[:i+2])
         self.stream.write(msg)
         #print(hex(len(msg)), hexlify(msg, ":"))
         self._send_str(self.client_id)
@@ -125,14 +126,14 @@ class MQTTClient:
             i += 1
         pkt[i] = sz
         #print(hex(len(pkt)), hexlify(pkt, ":"))
-        self.stream.write(pkt, i + 1)
+        self.stream.write(memoryview(pkt)[:i+1])
         self._send_str(topic)
         if qos > 0:
             self.pid += 1
             pid = self.pid
             struct.pack_into("!H", pkt, 0, pid)
-            self.stream.write(pkt, 2)
-        self.stream.write(msg)
+            self.stream.write(memoryview(pkt)[:2])
+        self.stream.write(msg.encode())
         self.stream.flush()
         if qos == 1:
             while 1:
