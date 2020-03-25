@@ -2,29 +2,30 @@ import usocket
 
 class Response:
 
-    def __init__(self, f):
-        self.raw = f
+    def __init__(self, socket, stream):
+        self.socket = socket
+        self.stream = stream
         self.encoding = "utf-8"
         self._cached = None
 
     def close(self):
-        if self.raw:
-            self.raw.close()
-            self.raw = None
-        self._cached = None
+        if self.stream:
+            self.stream.close()
+            self.stream = None
+        if self.socket:
+            self.socket.close()
+            self.socket = None
 
     @property
     def content(self):
         if self._cached is None:
             try:
-                self._cached = self.raw.read()
+                self._cached = self.stream.read()
             finally:
                 # OSError: [Errno -76] MBEDTLS_ERR_NET_RECV_FAILED
                 # AttributeError: NoneType object has no attribute close
                 # https://forum.pycom.io/topic/5755/micropython-error-trail-confusing-me
-                if self.raw:
-                    self.raw.close()
-                    self.raw = None
+                self.close()
         return self._cached
 
     @property
@@ -132,7 +133,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
         if status != 300:
             break
 
-    resp = Response(s)
+    resp = Response(s, ss)
     resp.status_code = status
     resp.reason = reason
     if resp_d is not None:
