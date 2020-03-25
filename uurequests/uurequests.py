@@ -64,9 +64,10 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
             s.connect(ai[-1])
             if proto == "https:":
                 s = ussl.wrap_socket(s, server_hostname=host)
-            s.write(b"%s /%s HTTP/1.0\r\n" % (method.encode(), path.encode()))
+            ss = s.makefile(mode='rwb')
+            ss.write(b"%s /%s HTTP/1.0\r\n" % (method.encode(), path.encode()))
             if not "Host" in headers:
-                s.write(b"Host: %s\r\n" % host.encode())
+                ss.write(b"Host: %s\r\n" % host.encode())
             # Iterate over keys to avoid tuple alloc
             for k in headers:
                 ss.write(k.encode())
@@ -77,14 +78,15 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
                 assert data is None
                 import ujson
                 data = ujson.dumps(json)
-                s.write(b"Content-Type: application/json\r\n")
+                ss.write(b"Content-Type: application/json\r\n")
             if data:
-                s.write(b"Content-Length: %d\r\n" % len(data))
-            s.write(b"Connection: close\r\n\r\n")
+                ss.write(b"Content-Length: %d\r\n" % len(data))
+            ss.write(b"Connection: close\r\n\r\n")
             if data:
-                s.write(data)
+                ss.write(data)
+            ss.flush()
 
-            l = s.readline()
+            l = ss.readline()
             #print(l)
             l = l.split(None, 2)
             status = int(l[1])
@@ -92,7 +94,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
             if len(l) > 2:
                 reason = l[2].rstrip()
             while True:
-                l = s.readline()
+                l = ss.readline()
                 if not l or l == b"\r\n":
                     break
                 #print(l)
