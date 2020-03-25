@@ -76,7 +76,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
             ss = s.makefile(mode='rwb')
             ss.write(b"%s /%s HTTP/1.0\r\n" % (method.encode(), path.encode()))
             if not "Host" in headers:
-                ss.write(b"Host: %s\r\n" % host.encode())
+                ss.write(b"Host: %s:%s\r\n" % (host.encode(), str(port).encode()))
             # Iterate over keys to avoid tuple alloc
             for k in headers:
                 ss.write(k.encode())
