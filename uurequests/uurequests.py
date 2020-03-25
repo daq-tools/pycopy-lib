@@ -37,7 +37,6 @@ class Response:
 
 
 def request(method, url, data=None, json=None, headers={}, stream=None, parse_headers=True):
-    redir_cnt = 1
     while True:
         try:
             proto, dummy, host, path = url.split("/", 3)
@@ -106,14 +105,8 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
                 if l.startswith(b"Transfer-Encoding:"):
                     if b"chunked" in l:
                         raise ValueError("Unsupported " + l.decode())
-                elif l.startswith(b"Location:") and 300 <= status <= 399:
-                    if not redir_cnt:
-                        raise ValueError("Too many redirects")
-                    redir_cnt -= 1
-                    url = l[9:].decode().strip()
-                    #print("redir to:", url)
-                    status = 300
-                    break
+                elif l.startswith(b"Location:") and not 200 <= status <= 299:
+                    raise NotImplementedError("Redirects not yet supported")
 
                 if parse_headers is False:
                     pass
@@ -126,9 +119,6 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
         except OSError:
             s.close()
             raise
-
-        if status != 300:
-            break
 
     resp = Response(s)
     resp.status_code = status
