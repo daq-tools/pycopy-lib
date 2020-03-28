@@ -62,7 +62,7 @@ class MQTTClient:
         if self.ssl:
             import ussl
             self.sock = ussl.wrap_socket(self.sock, **self.ssl_params)
-        self.stream = self.sock.makefile("rwb")
+        self.stream = self.sock.makefile(mode="rwb", buffering=False)
         premsg = bytearray(b"\x10\0\0\0\0\0")
         msg = bytearray(b"\x04MQTT\x04\x02\0\0")
 
@@ -97,7 +97,6 @@ class MQTTClient:
         if self.user is not None:
             self._send_str(self.user)
             self._send_str(self.pswd)
-        self.stream.flush()
         resp = self.stream.read(4)
         assert resp[0] == 0x20 and resp[1] == 0x02
         if resp[3] != 0:
@@ -106,12 +105,10 @@ class MQTTClient:
 
     def disconnect(self):
         self.stream.write(b"\xe0\0")
-        self.stream.flush()
         self.sock.close()
 
     def ping(self):
         self.stream.write(b"\xc0\0")
-        self.stream.flush()
 
     def publish(self, topic, msg, retain=False, qos=0):
         pkt = bytearray(b"\x30\0\0\0")
@@ -135,7 +132,6 @@ class MQTTClient:
             struct.pack_into("!H", pkt, 0, pid)
             self.stream.write(memoryview(pkt)[:2])
         self.stream.write(msg.encode())
-        self.stream.flush()
         if qos == 1:
             while 1:
                 op = self.wait_msg()
@@ -158,7 +154,6 @@ class MQTTClient:
         self.stream.write(pkt)
         self._send_str(topic)
         self.stream.write(qos.to_bytes(1, "little"))
-        self.stream.flush()
         while 1:
             op = self.wait_msg()
             if op == 0x90:
@@ -202,7 +197,6 @@ class MQTTClient:
             pkt = bytearray(b"\x40\x02\0\0")
             struct.pack_into("!H", pkt, 2, pid)
             self.stream.write(pkt)
-            self.stream.flush()
         elif op & 6 == 4:
             assert 0
 
