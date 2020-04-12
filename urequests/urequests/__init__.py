@@ -74,7 +74,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
             s.connect(ai[-1])
             if proto == "https:":
                 s = ussl.wrap_socket(s, server_hostname=host)
-            ss = s.makefile(mode='rwb', buffering=False)
+            ss = s.makefile('rwb', 0)
             ss.write(b"%s /%s HTTP/1.0\r\n" % (method.encode(), path.encode()))
             if not "Host" in headers:
                 ss.write(b"Host: %s:%s\r\n" % (host.encode(), str(port).encode()))
