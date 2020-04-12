@@ -62,7 +62,7 @@ class MQTTClient:
         if self.ssl:
             import ussl
             self.sock = ussl.wrap_socket(self.sock, **self.ssl_params)
-        self.stream = self.sock.makefile(mode="rwb", buffering=False)
+        self.stream = self.sock.makefile("rwb", 0)
         premsg = bytearray(b"\x10\0\0\0\0\0")
         msg = bytearray(b"\x04MQTT\x04\x02\0\0")
 
