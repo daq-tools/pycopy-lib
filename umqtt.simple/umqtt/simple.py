@@ -62,7 +62,14 @@ class MQTTClient:
         if self.ssl:
             import ussl
             self.sock = ussl.wrap_socket(self.sock, **self.ssl_params)
-        self.stream = self.sock.makefile("rwb", 0)
+
+        try:
+            self.stream = self.sock.makefile("rwb", 0)
+        except ValueError:
+            # Pycom's "socket.makefile" doesn't accept the "r" mode.
+            # https://forum.pycom.io/topic/4625/simple-http-server
+            self.stream = self.sock.makefile("wb", 0)
+
         premsg = bytearray(b"\x10\0\0\0\0\0")
         msg = bytearray(b"\x04MQTT\x04\x02\0\0")
 
