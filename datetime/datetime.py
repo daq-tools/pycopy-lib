@@ -914,6 +914,10 @@ class tzinfo:
     Subclasses must override the name(), utcoffset() and dst() methods.
     """
     __slots__ = ()
+
+    def __new__(cls, *args, **kwargs):
+        return object.__new__(cls)
+
     def tzname(self, dt):
         "datetime -> string name of time zone."
         raise NotImplementedError("tzinfo subclass must override tzname()")
@@ -1363,7 +1367,16 @@ class datetime(date):
         if us == 1000000:
             t += 1
             us = 0
-        y, m, d, hh, mm, ss, weekday, jday, dst = converter(t)
+
+        # Pycom MicroPython does not accept fractions of seconds to "time.gmtime()".
+        t = int(t)
+
+        # CPython returns a 9-tuple, while Pycom MicroPython returns an 8-tuple,
+        # omitting the last "is_dst" slot.
+        try:
+            y, m, d, hh, mm, ss, weekday, jday, dst = converter(t)
+        except ValueError:
+            y, m, d, hh, mm, ss, weekday, jday = converter(t)
         ss = min(ss, 59)    # clamp out leap seconds if the platform has them
         result = cls(y, m, d, hh, mm, ss, us, tz)
         if tz is not None:
